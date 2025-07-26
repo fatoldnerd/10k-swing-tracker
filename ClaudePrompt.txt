@@ -1,0 +1,161 @@
+Kettlebell Swing Tracker Prompt:
+
+## Complete Claude Code Prompt for 10K Swing Kettlebell Tracker (Firebase Version)
+
+**Create a modern Next.js 15 application for tracking the 10,000 Swing Kettlebell Challenge using Google Firebase as the backend database with the following specifications:**
+
+### Core Concept
+A fitness tracking app that helps users complete the 10K Swing Challenge - 20 workouts of 500 swings each, alternating with strength exercises. The app should have a beautiful, modern UI with glassmorphism effects and animated gradients, powered by Firebase Firestore for real-time data synchronization.
+
+### Technical Stack
+- **Framework**: Next.js 15 with App Router and TypeScript
+- **Styling**: Tailwind CSS v4 with custom animations and glassmorphism effects
+- **UI Components**: shadcn/ui components (Card, Button, Badge, Progress, Dialog, etc.)
+- **Database**: **Google Firebase Firestore** (NoSQL document database)
+- **Firebase SDK**: Firebase v11+ for web
+- **Authentication**: Firebase Auth (optional, for future user accounts)
+- **Icons**: Lucide React
+- **Date Handling**: date-fns
+- **Charts**: Recharts for analytics
+- **Animations**: Custom CSS animations and tw-animate-css
+- **State Management**: React hooks with Firebase real-time listeners
+
+### Firebase Configuration
+Set up Firebase with the following services:
+- **Firestore Database**: Main data storage
+- **Firebase Hosting**: For deployment
+- **Firebase Functions**: For server-side operations (optional)
+
+### Firestore Database Structure
+The app should use the following collections and document structure:
+
+**Workouts Collection**: Store workout details including date, strength exercise type, kettlebell weight, total time, completion status, and optional notes. Each workout should have a reference to its associated rounds.
+
+**Workout Rounds Collection**: Store individual round data for each workout, including round number (1-5), time in minutes and seconds, and reference to the parent workout.
+
+**User Settings Collection**: Store user preferences including preferred kettlebell weight, challenge start date, and target completion days.
+
+**Challenges Collection**: Track challenge progress including start/end dates, target days, and completion status.
+
+### Core Features
+
+#### 1. Dashboard
+- **Real-time data**: Use Firebase listeners for live workout updates
+- **Animated gradient background** with glassmorphism cards
+- **Challenge progress** showing completion percentage (20 workouts total)
+- **Recent workouts** with exercise type, weight, and completion time
+- **Quick stats**: completed workouts, average time, remaining workouts
+- **Achievement preview** showing recent unlocked achievements
+- **Navigation cards** to start workout, log workout, view history, analytics, and achievements
+
+#### 2. Workout Timer
+- **Pre-workout setup**: Select strength exercise, set kettlebell weight (8-32kg dropdown)
+- **Interactive timer** with real-time tracking
+- **Round structure** following the challenge format:
+  - Round 1: 10 swings + 5 strength exercises
+  - Round 2: 15 swings + 3 strength exercises  
+  - Round 3: 25 swings + 2 strength exercises
+  - Round 4: 50 swings
+- **Exercise transitions**: Automatic progression through swings → strength → rest
+- **Pause/resume functionality**
+- **Round time tracking** for each of the 5 rounds
+- **Completion flow** with automatic Firebase save
+
+#### 3. Manual Workout Logging
+- **Form-based logging** for completed workouts
+- **Exercise selection** from 5 strength exercises (Dips, Push-ups, Pull-ups, Goblet Squats, Military Press)
+- **Weight selection** with dropdown (8-32kg)
+- **Time input** with minutes/seconds controls
+- **Automatic round time estimation** based on total time
+- **Firebase save** with proper error handling
+
+#### 4. Workout History
+- **Real-time list** of all workouts using Firebase listeners
+- **Filtering options** by exercise type and completion status
+- **Detailed workout cards** showing exercise, weight, time, and round breakdown
+- **Edit functionality** for workout details with Firebase updates
+- **Delete functionality** with confirmation and Firebase removal
+
+#### 5. Analytics
+- **Real-time exercise comparison** using Firebase data
+- **Weekly progress charts** using Recharts with Firebase data
+- **Personal records** tracking best times and averages
+- **Volume tracking** showing total swings completed
+- **Performance insights** with key metrics
+
+#### 6. Achievements System
+- **Real-time achievement tracking** using Firebase data
+- **10 achievement badges** with different unlock criteria:
+  - First Steps: Complete first workout
+  - Consistency Rookie: Complete 5 workouts
+  - Speed Demon: Complete workout under 30 minutes
+  - Weekly Warrior: Complete 4 workouts in one week
+  - Streak Starter: Complete workouts on 3 consecutive days
+  - Century Club: Complete 10 workouts
+  - Swing Master: Complete 5,000 total swings
+  - Versatile Athlete: Try all 5 different strength exercises
+  - Endurance Champion: Complete the full 20-workout challenge
+  - Efficiency Expert: Complete workout under 25 minutes
+- **Progress tracking** showing unlocked vs locked achievements
+- **Achievement cards** with icons, colors, and descriptions
+
+### UI/UX Requirements
+
+#### Visual Design
+- **Animated gradient background** with shifting colors
+- **Glassmorphism effects** on all cards with backdrop blur
+- **Modern color scheme** with gradients for different sections
+- **Responsive design** optimized for mobile and desktop
+- **Smooth animations** for page transitions and interactions
+- **Custom CSS animations** for counters, progress bars, and hover effects
+
+#### Color Scheme & Gradients
+- **Primary gradients**: emerald to cyan, blue to purple, orange to red
+- **Background**: Animated gradient with shifting colors
+- **Cards**: Glassmorphism with white/transparent backgrounds
+- **Dark mode support** with proper contrast
+
+#### Typography & Spacing
+- **Large, bold headings** for main sections
+- **Consistent spacing** using Tailwind's spacing scale
+- **Readable font sizes** with proper hierarchy
+- **Counter animations** for statistics
+
+### Firebase Integration Requirements
+
+#### Real-time Data Synchronization
+- Use Firebase `onSnapshot` listeners for live data updates across all pages
+- Implement proper cleanup of listeners to prevent memory leaks
+- Handle offline scenarios gracefully with Firebase's built-in offline persistence
+
+#### Data Operations
+- Create comprehensive Firebase operations for CRUD operations on workouts, rounds, and settings
+- Implement batch operations for saving workouts with their associated rounds
+- Add proper error handling for all Firebase operations
+- Include data validation before saving to Firestore
+
+#### Security & Performance
+- Configure Firestore security rules for read/write access
+- Set up proper indexes for efficient queries
+- Optimize queries to minimize Firestore reads
+- Implement proper error boundaries for Firebase connection issues
+
+### Package Dependencies
+Include Firebase SDK, Next.js 15, React 19, Tailwind CSS v4, shadcn/ui components, Lucide React icons, date-fns, Recharts, and tw-animate-css for animations.
+
+### Environment Configuration
+Set up environment variables for Firebase configuration including API key, project ID, auth domain, storage bucket, messaging sender ID, and app ID.
+
+### Deployment Setup
+Configure Firebase hosting with Next.js standalone output, set up proper rewrites for the app router, and include Firebase functions configuration for server-side operations.
+
+### Special Requirements
+1. **Achievement System**: Implement comprehensive achievement tracking with unlock conditions based on Firebase data
+2. **Timer Logic**: Complex timer with round progression and exercise transitions
+3. **Data Visualization**: Charts and graphs for analytics using Firebase data
+4. **Responsive Design**: Mobile-first approach with touch-friendly interactions
+5. **Performance**: Optimize for smooth animations and real-time updates
+6. **Error Handling**: Graceful error handling for Firebase operations and network issues
+7. **Offline Support**: Leverage Firebase's offline persistence for seamless user experience
+
+**Focus on creating a beautiful, functional fitness tracking app with modern UI/UX that uses Firebase Firestore for real-time data synchronization. The app should feel premium and engaging with smooth animations, intuitive navigation, and seamless Firebase integration from the ground up.**
