@@ -66,7 +66,7 @@ export default function WorkoutTimer() {
     const roundTime = Math.floor((Date.now() - roundStartTime) / 1000);
     const newRoundTimes = [...timerState.roundTimes, roundTime];
 
-    if (timerState.currentRound >= 4) {
+    if (timerState.currentRound >= 5) {
       // Workout complete
       setTimerState(prev => ({
         ...prev,
@@ -196,7 +196,7 @@ export default function WorkoutTimer() {
         createdAt: new Date(), // Will be set by the service
       }));
 
-      const workoutData: Omit<Workout, 'id' | 'createdAt' | 'updatedAt'> = {
+      const workoutData: Omit<Workout, 'id' | 'createdAt' | 'updatedAt' | 'userId'> = {
         date: new Date(),
         strengthExercise: timerState.strengthExercise,
         kettlebellWeight: timerState.kettlebellWeight,

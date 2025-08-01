@@ -43,6 +43,7 @@ export default function WorkoutLogger() {
       { roundNumber: 2, minutes: 0, seconds: 0 },
       { roundNumber: 3, minutes: 0, seconds: 0 },
       { roundNumber: 4, minutes: 0, seconds: 0 },
+      { roundNumber: 5, minutes: 0, seconds: 0 },
     ],
   });
 
@@ -76,7 +77,7 @@ export default function WorkoutLogger() {
 
   const estimateRoundTimes = () => {
     const totalWorkoutSeconds = (formData.totalMinutes * 60) + formData.totalSeconds;
-    const avgRoundTime = Math.floor(totalWorkoutSeconds / 4);
+    const avgRoundTime = Math.floor(totalWorkoutSeconds / 5);
     
     const estimatedRounds = formData.rounds.map((round) => ({
       ...round,
@@ -117,14 +118,14 @@ export default function WorkoutLogger() {
         createdAt: new Date(), // Will be set by the service
       }));
 
-      const workoutData: Omit<Workout, 'id' | 'createdAt' | 'updatedAt'> = {
+      const workoutData: Omit<Workout, 'id' | 'createdAt' | 'updatedAt' | 'userId'> = {
         date: new Date(formData.date),
         strengthExercise: formData.strengthExercise,
         kettlebellWeight: formData.kettlebellWeight,
         totalTimeMinutes: formData.totalMinutes,
         totalTimeSeconds: formData.totalSeconds,
         completed: true,
-        notes: formData.notes || undefined,
+        notes: formData.notes || '',
         rounds: roundData,
       };
 
@@ -288,7 +289,7 @@ export default function WorkoutLogger() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               {formData.rounds.map((round, index) => (
                 <div key={round.roundNumber} className="space-y-2">
                   <Label className="text-white font-medium">Round {round.roundNumber}</Label>
@@ -341,7 +342,7 @@ export default function WorkoutLogger() {
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div>
-                <div className="text-2xl font-bold text-white">100</div>
+                <div className="text-2xl font-bold text-white">500</div>
                 <div className="text-white/60">Total Swings</div>
               </div>
               <div>

@@ -1,5 +1,10 @@
 import WorkoutTimer from '@/components/workout/WorkoutTimer';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 export default function WorkoutPage() {
-  return <WorkoutTimer />;
+  return (
+    <ProtectedRoute>
+      <WorkoutTimer />
+    </ProtectedRoute>
+  );
 }

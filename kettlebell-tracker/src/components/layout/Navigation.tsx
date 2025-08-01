@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 import { 
   Home, 
   Timer, 
@@ -12,7 +14,9 @@ import {
   BarChart3, 
   Trophy,
   Menu,
-  X
+  X,
+  LogOut,
+  User
 } from 'lucide-react';
 
 const navigationItems = [
@@ -27,6 +31,15 @@ const navigationItems = [
 export default function Navigation() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
 
   return (
     <nav className="sticky top-0 z-50 border-b border-white/10">
@@ -64,6 +77,23 @@ export default function Navigation() {
                   </Link>
                 );
               })}
+              
+              {/* User Menu */}
+              <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-white/20">
+                <div className="flex items-center space-x-2 text-white/80">
+                  <User className="w-4 h-4" />
+                  <span className="text-sm">{user?.email}</span>
+                </div>
+                <Button
+                  onClick={handleLogout}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
             </div>
 
             {/* Mobile Navigation Button */}
@@ -89,7 +119,7 @@ export default function Navigation() {
         isMobileMenuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
       )}>
         <div className="container mx-auto px-4 py-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 mb-4">
             {navigationItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
@@ -110,6 +140,25 @@ export default function Navigation() {
                 </Link>
               );
             })}
+          </div>
+          
+          {/* Mobile User Menu */}
+          <div className="border-t border-white/20 pt-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-white/80">
+                <User className="w-4 h-4" />
+                <span className="text-sm">{user?.email}</span>
+              </div>
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                size="sm"
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </div>

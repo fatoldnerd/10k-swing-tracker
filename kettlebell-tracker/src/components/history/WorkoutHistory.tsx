@@ -39,8 +39,8 @@ export default function WorkoutHistory() {
   
   const [filters, setFilters] = useState<FilterState>({
     search: '',
-    exercise: '',
-    completed: '',
+    exercise: 'all',
+    completed: 'all',
     dateFrom: '',
     dateTo: '',
   });
@@ -52,8 +52,8 @@ export default function WorkoutHistory() {
   const clearFilters = () => {
     setFilters({
       search: '',
-      exercise: '',
-      completed: '',
+      exercise: 'all',
+      completed: 'all',
       dateFrom: '',
       dateTo: '',
     });
@@ -71,12 +71,12 @@ export default function WorkoutHistory() {
     }
 
     // Exercise filter
-    if (filters.exercise && workout.strengthExercise !== filters.exercise) {
+    if (filters.exercise && filters.exercise !== 'all' && workout.strengthExercise !== filters.exercise) {
       return false;
     }
 
     // Completion filter
-    if (filters.completed) {
+    if (filters.completed && filters.completed !== 'all') {
       const isCompleted = filters.completed === 'completed';
       if (workout.completed !== isCompleted) return false;
     }
@@ -228,7 +228,7 @@ export default function WorkoutHistory() {
                   <SelectValue placeholder="All exercises" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All exercises</SelectItem>
+                  <SelectItem value="all">All exercises</SelectItem>
                   {STRENGTH_EXERCISES.map((exercise) => (
                     <SelectItem key={exercise} value={exercise}>
                       {exercise}
@@ -245,7 +245,7 @@ export default function WorkoutHistory() {
                   <SelectValue placeholder="All workouts" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All workouts</SelectItem>
+                  <SelectItem value="all">All workouts</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="incomplete">In Progress</SelectItem>
                 </SelectContent>

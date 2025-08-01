@@ -1,19 +1,28 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Workout, UserSettings, Challenge, Achievement, ACHIEVEMENT_DEFINITIONS } from '@/types';
 import { workoutService, settingsService, challengeService, achievementService } from '@/lib/firestore';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Workout hooks
 export function useWorkouts(limit?: number) {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
+    if (!user) {
+      setWorkouts([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     
     try {
       const unsubscribe = workoutService.subscribeToWorkouts(
+        user,
         (updatedWorkouts) => {
           setWorkouts(updatedWorkouts);
           setLoading(false);
@@ -33,17 +42,19 @@ export function useWorkouts(limit?: number) {
       setError(err instanceof Error ? err.message : 'Failed to load workouts');
       setLoading(false);
     }
-  }, [limit]);
+  }, [user, limit]);
 
-  const createWorkout = useCallback(async (workoutData: Omit<Workout, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const createWorkout = useCallback(async (workoutData: Omit<Workout, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) => {
+    if (!user) throw new Error('User not authenticated');
+    
     try {
       setError(null);
-      return await workoutService.createWorkout(workoutData);
+      return await workoutService.createWorkout(workoutData, user);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create workout');
       throw err;
     }
-  }, []);
+  }, [user]);
 
   const updateWorkout = useCallback(async (id: string, updates: Partial<Workout>) => {
     try {
@@ -112,13 +123,20 @@ export function useUserSettings() {
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
+    if (!user) {
+      setSettings(null);
+      setLoading(false);
+      return;
+    }
+
     const loadSettings = async () => {
       try {
         setLoading(true);
         setError(null);
-        const userSettings = await settingsService.getUserSettings();
+        const userSettings = await settingsService.getUserSettings(user);
         setSettings(userSettings);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load settings');
@@ -128,20 +146,22 @@ export function useUserSettings() {
     };
 
     loadSettings();
-  }, []);
+  }, [user]);
 
   const updateSettings = useCallback(async (updates: Partial<UserSettings>) => {
+    if (!user) throw new Error('User not authenticated');
+    
     try {
       setError(null);
-      await settingsService.updateUserSettings(updates);
+      await settingsService.updateUserSettings(user, updates);
       // Reload settings after update
-      const userSettings = await settingsService.getUserSettings();
+      const userSettings = await settingsService.getUserSettings(user);
       setSettings(userSettings);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update settings');
       throw err;
     }
-  }, []);
+  }, [user]);
 
   return {
     settings,
@@ -156,13 +176,20 @@ export function useChallenge() {
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
+    if (!user) {
+      setChallenge(null);
+      setLoading(false);
+      return;
+    }
+
     const loadChallenge = async () => {
       try {
         setLoading(true);
         setError(null);
-        const currentChallenge = await challengeService.getCurrentChallenge();
+        const currentChallenge = await challengeService.getCurrentChallenge(user);
         setChallenge(currentChallenge);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load challenge');
@@ -172,34 +199,38 @@ export function useChallenge() {
     };
 
     loadChallenge();
-  }, []);
+  }, [user]);
 
-  const createChallenge = useCallback(async (challengeData: Omit<Challenge, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const createChallenge = useCallback(async (challengeData: Omit<Challenge, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) => {
+    if (!user) throw new Error('User not authenticated');
+    
     try {
       setError(null);
-      const id = await challengeService.createChallenge(challengeData);
+      const id = await challengeService.createChallenge(challengeData, user);
       // Reload challenge after creation
-      const currentChallenge = await challengeService.getCurrentChallenge();
+      const currentChallenge = await challengeService.getCurrentChallenge(user);
       setChallenge(currentChallenge);
       return id;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create challenge');
       throw err;
     }
-  }, []);
+  }, [user]);
 
   const updateChallenge = useCallback(async (id: string, updates: Partial<Challenge>) => {
+    if (!user) throw new Error('User not authenticated');
+    
     try {
       setError(null);
       await challengeService.updateChallenge(id, updates);
       // Reload challenge after update
-      const currentChallenge = await challengeService.getCurrentChallenge();
+      const currentChallenge = await challengeService.getCurrentChallenge(user);
       setChallenge(currentChallenge);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update challenge');
       throw err;
     }
-  }, []);
+  }, [user]);
 
   return {
     challenge,
@@ -215,10 +246,18 @@ export function useAchievements() {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
+    if (!user) {
+      setAchievements([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     const unsubscribe = achievementService.subscribeToAchievements(
+      user,
       (updatedAchievements) => {
         setAchievements(updatedAchievements);
         setLoading(false);
@@ -227,13 +266,15 @@ export function useAchievements() {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   const initializeAchievements = useCallback(async () => {
+    if (!user) throw new Error('User not authenticated');
+    
     try {
       setError(null);
       // Check if achievements already exist
-      const existingAchievements = await achievementService.getAchievements();
+      const existingAchievements = await achievementService.getAchievements(user);
       
       if (existingAchievements.length === 0) {
         // Initialize with default achievements
@@ -242,13 +283,13 @@ export function useAchievements() {
           unlocked: false,
         }));
         
-        await achievementService.initializeAchievements(defaultAchievements);
+        await achievementService.initializeAchievements(defaultAchievements, user);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to initialize achievements');
       throw err;
     }
-  }, []);
+  }, [user]);
 
   const unlockAchievement = useCallback(async (achievementId: string) => {
     try {
@@ -269,10 +310,25 @@ export function useAchievements() {
   };
 }
 
-// Progress calculation hook
-export function useProgressStats() {
-  const { workouts, loading: workoutsLoading } = useWorkouts();
+// Shared workout data hook - optimized to fetch all data once
+export function useSharedWorkoutData() {
+  const { workouts, loading: workoutsLoading } = useWorkouts(); // Fetch all workouts once
   const { challenge, loading: challengeLoading } = useChallenge();
+
+  // Return both raw workouts and loading state for sharing
+  return {
+    workouts,
+    recentWorkouts: workouts.slice(0, 5), // First 5 for recent workouts section
+    loading: workoutsLoading || challengeLoading,
+    workoutsLoading,
+    challengeLoading,
+    challenge
+  };
+}
+
+// Progress calculation hook - now uses shared data
+export function useProgressStats() {
+  const { workouts, workoutsLoading, challengeLoading, challenge } = useSharedWorkoutData();
 
   const [stats, setStats] = useState({
     completedWorkouts: 0,
@@ -290,7 +346,7 @@ export function useProgressStats() {
     if (workoutsLoading || challengeLoading) return;
 
     const completedWorkouts = workouts.filter(w => w.completed).length;
-    const totalSwings = completedWorkouts * 100; // Each workout is 100 swings
+    const totalSwings = completedWorkouts * 500; // Each workout is 500 swings
     
     // Calculate average time
     const completedWorkoutTimes = workouts

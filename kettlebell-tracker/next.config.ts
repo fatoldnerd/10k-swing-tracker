@@ -1,12 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'export',
+  // This is the correct setting for your dynamic app
+  output: 'standalone',
+
+  // Your other settings are fine
   trailingSlash: true,
   images: {
     unoptimized: true,
   },
-  distDir: 'out',
   eslint: {
     ignoreDuringBuilds: true,
   },

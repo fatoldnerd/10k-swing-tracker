@@ -10,6 +10,7 @@ export interface WorkoutRound {
 
 export interface Workout {
   id: string;
+  userId: string;
   date: Date;
   strengthExercise: StrengthExercise;
   kettlebellWeight: number; // kg
@@ -33,6 +34,7 @@ export type StrengthExercise =
 // User settings
 export interface UserSettings {
   id: string;
+  userId: string;
   preferredKettlebellWeight: number;
   challengeStartDate: Date;
   targetCompletionDays: number;
@@ -43,6 +45,7 @@ export interface UserSettings {
 // Challenge tracking
 export interface Challenge {
   id: string;
+  userId: string;
   startDate: Date;
   endDate?: Date;
   targetDays: number;
@@ -56,6 +59,7 @@ export interface Challenge {
 // Achievement system
 export interface Achievement {
   id: string;
+  userId: string;
   name: string;
   description: string;
   icon: string;
@@ -79,10 +83,11 @@ export interface RoundStructure {
 }
 
 export const ROUND_STRUCTURES: RoundStructure[] = [
-  { roundNumber: 1, swings: 10, strengthReps: 5 },
-  { roundNumber: 2, swings: 15, strengthReps: 3 },
-  { roundNumber: 3, swings: 25, strengthReps: 2 },
-  { roundNumber: 4, swings: 50, strengthReps: 0 },
+  { roundNumber: 1, swings: 100, strengthReps: 5 },
+  { roundNumber: 2, swings: 100, strengthReps: 3 },
+  { roundNumber: 3, swings: 100, strengthReps: 2 },
+  { roundNumber: 4, swings: 100, strengthReps: 0 },
+  { roundNumber: 5, swings: 100, strengthReps: 0 },
 ];
 
 // Kettlebell weight options
@@ -98,7 +103,7 @@ export const STRENGTH_EXERCISES: StrengthExercise[] = [
 ];
 
 // Achievement definitions
-export const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, 'id' | 'unlocked' | 'unlockedAt'>[] = [
+export const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, 'id' | 'unlocked' | 'unlockedAt' | 'userId'>[] = [
   {
     name: 'First Steps',
     description: 'Complete your first workout',

@@ -1,5 +1,10 @@
 import Analytics from '@/components/analytics/Analytics';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 export default function AnalyticsPage() {
-  return <Analytics />;
+  return (
+    <ProtectedRoute>
+      <Analytics />
+    </ProtectedRoute>
+  );
 }

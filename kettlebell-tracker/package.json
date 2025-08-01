@@ -11,7 +11,12 @@
     "deploy": "npm run export && firebase deploy --only hosting",
     "firebase:emulators": "firebase emulators:start",
     "firebase:deploy": "firebase deploy",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test:emulators": "echo 'Start emulators: npm run firebase:emulators (in another terminal)' && npm run dev",
+    "test:build": "npm run type-check && npm run lint && npm run build",
+    "test:production": "npm run build && npm run start",
+    "firebase:rules": "firebase deploy --only firestore:rules",
+    "setup:env": "cp .env.local.example .env.local && echo 'Please edit .env.local with your Firebase credentials'"
   },
   "dependencies": {
     "@firebase/app": "^0.13.1",

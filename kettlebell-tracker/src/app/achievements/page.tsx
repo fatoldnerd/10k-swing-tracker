@@ -1,5 +1,10 @@
 import Achievements from '@/components/achievements/Achievements';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 export default function AchievementsPage() {
-  return <Achievements />;
+  return (
+    <ProtectedRoute>
+      <Achievements />
+    </ProtectedRoute>
+  );
 }

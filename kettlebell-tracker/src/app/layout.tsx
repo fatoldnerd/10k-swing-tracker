@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Layout from "@/components/layout/Layout";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,6 +18,17 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "10K Swing Tracker",
   description: "Track your 10,000 swing kettlebell challenge with real-time progress monitoring",
+  icons: {
+    icon: '/kettlebell-icon.svg',
+    apple: '/kettlebell-icon.svg',
+  },
+  manifest: '/manifest.json',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#f97316',
 };
 
 export default function RootLayout({
@@ -30,9 +42,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}
       >
         <ErrorBoundary>
-          <Layout>
-            {children}
-          </Layout>
+          <AuthProvider>
+            <Layout>
+              {children}
+            </Layout>
+          </AuthProvider>
         </ErrorBoundary>
       </body>
     </html>

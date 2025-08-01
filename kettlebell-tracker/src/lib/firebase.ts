@@ -1,21 +1,21 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { GoogleAuthProvider } from 'firebase/auth';
 
 // Check if Firebase credentials are properly configured
 const hasValidFirebaseConfig = () => {
-  const requiredVars = [
-    'NEXT_PUBLIC_FIREBASE_API_KEY',
-    'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
-    'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
-    'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
-    'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
-    'NEXT_PUBLIC_FIREBASE_APP_ID',
+  const values = [
+    process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   ];
 
-  return requiredVars.every(varName => {
-    const value = process.env[varName];
-    return value && value !== '' && !value.startsWith('PUT_YOUR_REAL_');
+  return values.every(value => {
+    return value && value !== '' && !value.startsWith('PUT_YOUR_REAL_') && value !== 'your-';
   });
 };
 
@@ -47,6 +47,9 @@ export const db = getFirestore(app);
 // Initialize Auth
 export const auth = getAuth(app);
 
+// Initialize Google Auth Provider
+export const googleProvider = new GoogleAuthProvider();
+
 // Track if we're using mock configuration
 export const isUsingMockConfig = !hasValidFirebaseConfig();
 
@@ -57,15 +60,18 @@ const shouldUseEmulator = process.env.NODE_ENV === 'development' &&
 if (shouldUseEmulator) {
   try {
     connectFirestoreEmulator(db, 'localhost', 8080);
-    console.log('Connected to Firestore emulator');
+    connectAuthEmulator(auth, 'http://localhost:9099');
+    console.log('Connected to Firebase emulators');
   } catch (error) {
-    console.warn('Firestore emulator connection failed:', error);
+    console.warn('Firebase emulator connection failed:', error);
     console.warn('Continuing with offline mode...');
   }
 }
 
 if (isUsingMockConfig) {
   console.warn('⚠️  Using mock Firebase configuration. Please update your .env.local file with real Firebase credentials for full functionality.');
+} else {
+  console.log('✅ Connected to real Firebase project:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
 }
 
 export default app;

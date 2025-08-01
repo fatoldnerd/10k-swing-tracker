@@ -5,6 +5,7 @@ import {
   getDoc,
   getDocs,
   updateDoc,
+  setDoc,
   query,
   where,
   orderBy,
@@ -13,6 +14,7 @@ import {
   writeBatch,
   limit,
 } from 'firebase/firestore';
+import { User } from 'firebase/auth';
 import { db } from './firebase';
 import { Workout, WorkoutRound, UserSettings, Challenge, Achievement } from '@/types';
 
@@ -31,46 +33,53 @@ const dateToTimestamp = (date: Date): Timestamp => Timestamp.fromDate(date);
 
 // Workout operations
 export const workoutService = {
-  // Create new workout with rounds
-  async createWorkout(workoutData: Omit<Workout, 'id' | 'createdAt' | 'updatedAt'>) {
-    const batch = writeBatch(db);
-    
-    // Create workout document
+  // Create new workout with rounds (denormalized - rounds stored in workout document)
+  async createWorkout(workoutData: Omit<Workout, 'id' | 'createdAt' | 'updatedAt' | 'userId'>, user: User) {
+    // Store rounds directly in workout document for performance
     const workoutRef = doc(collection(db, COLLECTIONS.WORKOUTS));
     const workout: Omit<Workout, 'id'> = {
       ...workoutData,
+      userId: user.uid,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
     
-    batch.set(workoutRef, {
+    // Convert dates to timestamps for Firestore
+    const firestoreData = {
       ...workout,
       date: dateToTimestamp(workout.date),
       createdAt: dateToTimestamp(workout.createdAt),
       updatedAt: dateToTimestamp(workout.updatedAt),
-    });
-    
-    // Create round documents
-    workoutData.rounds.forEach((round) => {
-      const roundRef = doc(collection(db, COLLECTIONS.WORKOUT_ROUNDS));
-      batch.set(roundRef, {
+      // Rounds are now stored directly in the workout document
+      rounds: workoutData.rounds.map(round => ({
         ...round,
-        workoutId: workoutRef.id,
         createdAt: dateToTimestamp(new Date()),
-      });
-    });
+      }))
+    };
     
-    await batch.commit();
+    await setDoc(workoutRef, firestoreData);
     return workoutRef.id;
   },
 
-  // Get workout by ID
+  // Get workout by ID (optimized - no separate rounds query)
   async getWorkout(id: string): Promise<Workout | null> {
     const workoutDoc = await getDoc(doc(db, COLLECTIONS.WORKOUTS, id));
     if (!workoutDoc.exists()) return null;
     
     const data = workoutDoc.data();
-    const rounds = await this.getWorkoutRounds(id);
+    
+    // Check if rounds are stored in document (new format) or need to be fetched separately (legacy)
+    let rounds;
+    if (data.rounds && Array.isArray(data.rounds)) {
+      // New format: rounds stored directly in document
+      rounds = data.rounds.map((round: any) => ({
+        ...round,
+        createdAt: round.createdAt ? timestampToDate(round.createdAt) : new Date(),
+      }));
+    } else {
+      // Legacy format: fetch rounds separately (for existing data)
+      rounds = await this.getWorkoutRounds(id);
+    }
     
     return {
       id: workoutDoc.id,
@@ -82,10 +91,11 @@ export const workoutService = {
     } as Workout;
   },
 
-  // Get all workouts
-  async getWorkouts(limitCount?: number): Promise<Workout[]> {
+  // Get all workouts (OPTIMIZED - no N+1 queries!)
+  async getWorkouts(user: User, limitCount?: number): Promise<Workout[]> {
     let q = query(
       collection(db, COLLECTIONS.WORKOUTS),
+      where('userId', '==', user.uid),
       orderBy('date', 'desc')
     );
     
@@ -94,21 +104,33 @@ export const workoutService = {
     }
     
     const snapshot = await getDocs(q);
-    const workouts = await Promise.all(
-      snapshot.docs.map(async (doc) => {
-        const data = doc.data();
-        const rounds = await this.getWorkoutRounds(doc.id);
-        
-        return {
-          id: doc.id,
-          ...data,
-          date: timestampToDate(data.date),
-          createdAt: timestampToDate(data.createdAt),
-          updatedAt: timestampToDate(data.updatedAt),
-          rounds,
-        } as Workout;
-      })
-    );
+    
+    // Process documents efficiently - no additional queries needed!
+    const workouts = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      
+      // Handle both new (denormalized) and legacy (normalized) formats
+      let rounds;
+      if (data.rounds && Array.isArray(data.rounds)) {
+        // New format: rounds stored directly in document
+        rounds = data.rounds.map((round: any) => ({
+          ...round,
+          createdAt: round.createdAt ? timestampToDate(round.createdAt) : new Date(),
+        }));
+      } else {
+        // Legacy format: empty rounds array (will be migrated eventually)
+        rounds = [];
+      }
+      
+      return {
+        id: doc.id,
+        ...data,
+        date: timestampToDate(data.date),
+        createdAt: timestampToDate(data.createdAt),
+        updatedAt: timestampToDate(data.updatedAt),
+        rounds,
+      } as Workout;
+    });
     
     return workouts;
   },
@@ -132,7 +154,7 @@ export const workoutService = {
     });
   },
 
-  // Update workout
+  // Update workout (supports denormalized rounds)
   async updateWorkout(id: string, updates: Partial<Workout>) {
     const workoutRef = doc(db, COLLECTIONS.WORKOUTS, id);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -145,29 +167,43 @@ export const workoutService = {
       updateData.date = dateToTimestamp(updates.date);
     }
     
+    // Handle rounds if provided (for denormalized structure)
+    if (updates.rounds) {
+      updateData.rounds = updates.rounds.map(round => ({
+        ...round,
+        createdAt: round.createdAt ? dateToTimestamp(round.createdAt) : dateToTimestamp(new Date()),
+      }));
+    }
+    
     await updateDoc(workoutRef, updateData);
   },
 
-  // Delete workout and its rounds
+  // Delete workout (handles both denormalized and legacy formats)
   async deleteWorkout(id: string) {
     const batch = writeBatch(db);
     
-    // Delete workout
+    // Delete workout document (rounds are included for denormalized format)
     batch.delete(doc(db, COLLECTIONS.WORKOUTS, id));
     
-    // Delete associated rounds
-    const rounds = await this.getWorkoutRounds(id);
-    rounds.forEach((round) => {
-      batch.delete(doc(db, COLLECTIONS.WORKOUT_ROUNDS, round.id));
-    });
+    // For legacy format: also delete separate round documents if they exist
+    try {
+      const rounds = await this.getWorkoutRounds(id);
+      rounds.forEach((round) => {
+        batch.delete(doc(db, COLLECTIONS.WORKOUT_ROUNDS, round.id));
+      });
+    } catch (error) {
+      // If no separate rounds exist, that's fine (denormalized format)
+      console.log('No separate round documents to delete (using denormalized format)');
+    }
     
     await batch.commit();
   },
 
-  // Subscribe to workouts (real-time)
-  subscribeToWorkouts(callback: (workouts: Workout[]) => void, limitCount?: number) {
+  // Subscribe to workouts (real-time) - OPTIMIZED: no N+1 queries!
+  subscribeToWorkouts(user: User, callback: (workouts: Workout[]) => void, limitCount?: number) {
     let q = query(
       collection(db, COLLECTIONS.WORKOUTS),
+      where('userId', '==', user.uid),
       orderBy('date', 'desc')
     );
     
@@ -175,22 +211,33 @@ export const workoutService = {
       q = query(q, limit(limitCount));
     }
     
-    return onSnapshot(q, async (snapshot) => {
-      const workouts = await Promise.all(
-        snapshot.docs.map(async (doc) => {
-          const data = doc.data();
-          const rounds = await this.getWorkoutRounds(doc.id);
-          
-          return {
-            id: doc.id,
-            ...data,
-            date: timestampToDate(data.date),
-            createdAt: timestampToDate(data.createdAt),
-            updatedAt: timestampToDate(data.updatedAt),
-            rounds,
-          } as Workout;
-        })
-      );
+    return onSnapshot(q, (snapshot) => {
+      // Process documents synchronously - no additional queries!
+      const workouts = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        
+        // Handle both new (denormalized) and legacy (normalized) formats
+        let rounds;
+        if (data.rounds && Array.isArray(data.rounds)) {
+          // New format: rounds stored directly in document
+          rounds = data.rounds.map((round: any) => ({
+            ...round,
+            createdAt: round.createdAt ? timestampToDate(round.createdAt) : new Date(),
+          }));
+        } else {
+          // Legacy format: empty rounds array (will be migrated eventually)
+          rounds = [];
+        }
+        
+        return {
+          id: doc.id,
+          ...data,
+          date: timestampToDate(data.date),
+          createdAt: timestampToDate(data.createdAt),
+          updatedAt: timestampToDate(data.updatedAt),
+          rounds,
+        } as Workout;
+      });
       
       callback(workouts);
     });
@@ -199,8 +246,12 @@ export const workoutService = {
 
 // User settings operations
 export const settingsService = {
-  async getUserSettings(): Promise<UserSettings | null> {
-    const q = query(collection(db, COLLECTIONS.USER_SETTINGS), limit(1));
+  async getUserSettings(user: User): Promise<UserSettings | null> {
+    const q = query(
+      collection(db, COLLECTIONS.USER_SETTINGS),
+      where('userId', '==', user.uid),
+      limit(1)
+    );
     const snapshot = await getDocs(q);
     
     if (snapshot.empty) return null;
@@ -217,8 +268,8 @@ export const settingsService = {
     } as UserSettings;
   },
 
-  async updateUserSettings(settings: Partial<UserSettings>) {
-    const existing = await this.getUserSettings();
+  async updateUserSettings(user: User, settings: Partial<UserSettings>) {
+    const existing = await this.getUserSettings(user);
     
     if (existing) {
       const settingsRef = doc(db, COLLECTIONS.USER_SETTINGS, existing.id);
@@ -239,6 +290,7 @@ export const settingsService = {
         challengeStartDate: new Date(),
         targetCompletionDays: 30,
         ...settings,
+        userId: user.uid,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -255,9 +307,10 @@ export const settingsService = {
 
 // Challenge operations
 export const challengeService = {
-  async getCurrentChallenge(): Promise<Challenge | null> {
+  async getCurrentChallenge(user: User): Promise<Challenge | null> {
     const q = query(
       collection(db, COLLECTIONS.CHALLENGES),
+      where('userId', '==', user.uid),
       where('completed', '==', false),
       orderBy('createdAt', 'desc'),
       limit(1)
@@ -279,9 +332,10 @@ export const challengeService = {
     } as Challenge;
   },
 
-  async createChallenge(challengeData: Omit<Challenge, 'id' | 'createdAt' | 'updatedAt'>) {
+  async createChallenge(challengeData: Omit<Challenge, 'id' | 'createdAt' | 'updatedAt' | 'userId'>, user: User) {
     const challenge: Omit<Challenge, 'id'> = {
       ...challengeData,
+      userId: user.uid,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -319,8 +373,12 @@ export const challengeService = {
 
 // Achievement operations
 export const achievementService = {
-  async getAchievements(): Promise<Achievement[]> {
-    const snapshot = await getDocs(collection(db, COLLECTIONS.ACHIEVEMENTS));
+  async getAchievements(user: User): Promise<Achievement[]> {
+    const q = query(
+      collection(db, COLLECTIONS.ACHIEVEMENTS),
+      where('userId', '==', user.uid)
+    );
+    const snapshot = await getDocs(q);
     return snapshot.docs.map((doc) => {
       const data = doc.data();
       return {
@@ -339,13 +397,14 @@ export const achievementService = {
     });
   },
 
-  async initializeAchievements(achievements: Omit<Achievement, 'id'>[]) {
+  async initializeAchievements(achievements: Omit<Achievement, 'id' | 'userId'>[], user: User) {
     const batch = writeBatch(db);
     
     achievements.forEach((achievement) => {
       const achievementRef = doc(collection(db, COLLECTIONS.ACHIEVEMENTS));
       batch.set(achievementRef, {
         ...achievement,
+        userId: user.uid,
         unlockedAt: achievement.unlockedAt ? dateToTimestamp(achievement.unlockedAt) : null,
       });
     });
@@ -353,8 +412,12 @@ export const achievementService = {
     await batch.commit();
   },
 
-  subscribeToAchievements(callback: (achievements: Achievement[]) => void) {
-    return onSnapshot(collection(db, COLLECTIONS.ACHIEVEMENTS), (snapshot) => {
+  subscribeToAchievements(user: User, callback: (achievements: Achievement[]) => void) {
+    const q = query(
+      collection(db, COLLECTIONS.ACHIEVEMENTS),
+      where('userId', '==', user.uid)
+    );
+    return onSnapshot(q, (snapshot) => {
       const achievements = snapshot.docs.map((doc) => {
         const data = doc.data();
         return {
