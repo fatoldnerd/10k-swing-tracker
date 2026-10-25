@@ -5,14 +5,19 @@ service cloud.firestore {
     
     // Workouts: Users can only access their own workouts
     match /workouts/{workoutId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow read, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId
+        && request.resource.data.userId == resource.data.userId;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
     }
     
     // Workout rounds: Users can only access rounds for their own workouts
     match /workout_rounds/{roundId} {
-      allow read, write: if request.auth != null && 
+      allow read, delete: if request.auth != null && 
         exists(/databases/$(database)/documents/workouts/$(resource.data.workoutId)) &&
+        get(/databases/$(database)/documents/workouts/$(resource.data.workoutId)).data.userId == request.auth.uid;
+      allow update: if request.auth != null &&
+        request.resource.data.workoutId == resource.data.workoutId &&
         get(/databases/$(database)/documents/workouts/$(resource.data.workoutId)).data.userId == request.auth.uid;
       allow create: if request.auth != null &&
         exists(/databases/$(database)/documents/workouts/$(request.resource.data.workoutId)) &&
@@ -21,19 +26,25 @@ service cloud.firestore {
     
     // User settings: Users can only access their own settings
     match /user_settings/{settingsId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow read, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId
+        && request.resource.data.userId == resource.data.userId;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
     }
     
     // Challenges: Users can only access their own challenges
     match /challenges/{challengeId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow read, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId
+        && request.resource.data.userId == resource.data.userId;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
     }
     
     // Achievements: Users can only access their own achievements
     match /achievements/{achievementId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow read, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId
+        && request.resource.data.userId == resource.data.userId;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
     }
     
