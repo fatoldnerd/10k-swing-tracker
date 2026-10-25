@@ -1,0 +1,11 @@
+import {spawnSync} from 'node:child_process';
+import {cpSync,rmSync} from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const app=path.join(root,'kettlebell-tracker');
+const build=spawnSync(process.platform==='win32'?'npm.cmd':'npm',['run','build'],{cwd:app,stdio:'inherit'});
+if(build.status!==0)process.exit(build.status||1);
+const output=path.join(root,'out');
+rmSync(output,{recursive:true,force:true});
+cpSync(path.join(app,'out'),output,{recursive:true});
