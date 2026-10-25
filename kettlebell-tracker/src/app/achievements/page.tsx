@@ -1,10 +1,2 @@
-import Achievements from '@/components/achievements/Achievements';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
-
-export default function AchievementsPage() {
-  return (
-    <ProtectedRoute>
-      <Achievements />
-    </ProtectedRoute>
-  );
-}
+import ModernScreen from '@/family/ModernScreen';
+export default function Page(){return <ModernScreen initialTab='progress'/>;}

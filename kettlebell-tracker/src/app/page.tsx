@@ -1,10 +1,2 @@
-import Dashboard from '@/components/dashboard/Dashboard';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
-
-export default function Home() {
-  return (
-    <ProtectedRoute>
-      <Dashboard />
-    </ProtectedRoute>
-  );
-}
+import ModernScreen from '@/family/ModernScreen';
+export default function Page(){return <ModernScreen initialTab='train'/>;}

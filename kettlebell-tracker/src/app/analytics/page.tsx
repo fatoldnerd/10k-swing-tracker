@@ -1,10 +1,2 @@
-import Analytics from '@/components/analytics/Analytics';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
-
-export default function AnalyticsPage() {
-  return (
-    <ProtectedRoute>
-      <Analytics />
-    </ProtectedRoute>
-  );
-}
+import ModernScreen from '@/family/ModernScreen';
+export default function Page(){return <ModernScreen initialTab='progress'/>;}

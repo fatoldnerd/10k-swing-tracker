@@ -1,10 +1,2 @@
-import WorkoutHistory from '@/components/history/WorkoutHistory';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
-
-export default function HistoryPage() {
-  return (
-    <ProtectedRoute>
-      <WorkoutHistory />
-    </ProtectedRoute>
-  );
-}
+import ModernScreen from '@/family/ModernScreen';
+export default function Page(){return <ModernScreen initialTab='history'/>;}

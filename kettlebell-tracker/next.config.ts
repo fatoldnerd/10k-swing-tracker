@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // This is the correct setting for your dynamic app
-  output: 'standalone',
+  output: 'export',
 
   // Your other settings are fine
   trailingSlash: true,

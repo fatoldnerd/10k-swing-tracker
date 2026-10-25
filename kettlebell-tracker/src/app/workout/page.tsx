@@ -1,10 +1,2 @@
-import WorkoutTimer from '@/components/workout/WorkoutTimer';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
-
-export default function WorkoutPage() {
-  return (
-    <ProtectedRoute>
-      <WorkoutTimer />
-    </ProtectedRoute>
-  );
-}
+import ModernScreen from '@/family/ModernScreen';
+export default function Page(){return <ModernScreen initialTab='train'/>;}

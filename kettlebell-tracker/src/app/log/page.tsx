@@ -1,10 +1,2 @@
-import WorkoutLogger from '@/components/log/WorkoutLogger';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
-
-export default function LogPage() {
-  return (
-    <ProtectedRoute>
-      <WorkoutLogger />
-    </ProtectedRoute>
-  );
-}
+import ModernScreen from '@/family/ModernScreen';
+export default function Page(){return <ModernScreen initialTab='train'/>;}

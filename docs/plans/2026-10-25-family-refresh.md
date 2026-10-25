@@ -14,10 +14,20 @@ General tracker: reusable workout templates and a configurable exercise list, ex
 
 ## Checklist
 - [x] Review approved design, source repositories, and imagery.
-- [ ] Implement the modern interface with existing identity and data adapters.
-- [ ] Run build and meaningful calculation/state checks.
-- [ ] Verify phone and desktop flows in the browser.
+- [x] Implement the modern interface with existing identity and data adapters.
+- [x] Run build and meaningful calculation/state checks.
+- [x] Verify phone and desktop flows in the browser.
 - [ ] Publish a private review version and create a draft PR.
 
 ## Release boundaries
 Existing live domains remain unchanged. Signed-in Firebase behavior and physical-phone audio/wake lock require separate verification. Device preview is clearly labeled and cannot imply cloud saving. Shared identity across separate Firebase projects remains a later migration task.
+
+## Review evidence
+
+PASS: Verified a partial six-swing session yields six actual swings and 144 kg with a 24 kg bell, and progress derives from those actual reps. The five shared model tests also verify 10/15/25/50 repeated five times reaches exactly 500. Next.js static export and type checks pass. All existing routes render the matching new interface. Firebase client configuration is read from the live app’s public Hosting initialization endpoint into ignored .env.local.
+
+All three trackers use the same five calculation/state tests. The shared source is copied into each repository so each app remains independently buildable; it is not a deployed shared identity service. New schema records are stored alongside legacy history using the existing user-owned collection paths.
+
+Imagery is reused unchanged from the existing Command Center repository: KettlebellSnatch.png, KettlebellSwing.png, TurkishGetUp1.png, and New_Kettlebell.png. Typography and color tokens derive from the approved Armor Builder version. Active phone training screens hide photographs to keep controls readable.
+
+UNVERIFIED: live Google/email authentication, signed-in Firestore read/write and cross-device synchronization, physical iOS audio/haptics/wake lock. New hostnames may need Firebase authorized-domain configuration. Existing live domains and deployed Firestore rules were not changed. Private review sites contain no seeded workout history.

@@ -55,4 +55,6 @@ ui-debug.log
 
 # Temporary folders
 tmp/
-temp/ 
+temp/
+.sites-runtime/
+outputs/
