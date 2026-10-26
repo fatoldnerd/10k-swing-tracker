@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "export": "next build",
-    "deploy": "npm run export && firebase deploy --only hosting",
+    "deploy": "npm run build && firebase deploy --only hosting --project k-swing-challenge-tracker",
     "firebase:emulators": "firebase emulators:start",
     "firebase:deploy": "firebase deploy",
     "type-check": "tsc --noEmit",

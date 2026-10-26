@@ -2,6 +2,7 @@
   "name": "ten-thousand-swings-review",
   "private": true,
   "scripts": {
-    "build": "node scripts/build-review.mjs"
+    "build": "node scripts/build-review.mjs",
+    "deploy": "npm --prefix kettlebell-tracker run deploy"
   }
 }
